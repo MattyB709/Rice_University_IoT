@@ -4,10 +4,45 @@
 fn main() {
     let stream1 = vec![1,2,3,1,4,3,4,4,3,3,3,2,4,4];
     let stream2 = vec![9,121,3,11,5,6,6,3,3];
+    let stream3 = vec![-5,-100,-11,-2];
+       
+    // Running average test case:
+
+    println!("{}", running_average(&stream1));
+    println!("{}", running_average(&stream2));
+    println!("{}", running_average(&stream3));
+
+    // stdev test case
+
+    /*println!("{}", stdev(&stream1));
+    println!("{}", stdev(&stream2));
+    println!("{}", stdev(&stream3));*/
+
+    // second greatest test case
+
+    
+    /*println!("{}", second_greatest(&stream1));
+    println!("{}", second_greatest(&stream2));
+    println!("{}", second_greatest(&stream3));*/
+    
+
+    // ksteps ago test case
+
+    
+    /*ksteps(&stream1, 3);
+    ksteps(&stream2, 4);
+    ksteps(&stream3, 5);*/
+    
+
+    // most frequent test case
+    
+    /*let stream1 = vec![1,2,3,1,4,3,4,4,3,3,3,2,4,4];
+    let stream2 = vec![9,121,3,11,5,6,6,3,3];
     let stream3 = vec![5,100,11,2];
+
     println!("{}", most_frequent(&stream1));
     println!("{}", most_frequent(&stream2));
-    println!("{}", most_frequent(&stream3));
+    println!("{}", most_frequent(&stream3));*/
 }
 
 fn find_max(x: &Vec<i16>)->i16{
@@ -73,8 +108,17 @@ fn second_greatest(x: &Vec<i16>)->i16{
     second
 }
 
-/*fn ksteps(x: Vec<i16>, k: i16){
-    for i in k..x.len(){
-        println!(x[i-k]);
-    }
-}*/
+fn ksteps(x: &Vec<i16>, k: usize){
+    // Creates a vector to be used as delay system
+    let mut vec = vec![0; k];
+    for i in 0..x.len(){
+        // Prints the furthest right number in the vector
+        println!("{}", vec[k-1]);
+        // Pushes all numbers one spot to the right
+        for y in (1..vec.len()).rev(){
+            vec[y] = vec[y-1];
+        }
+        // Sets the first element of the vector to current item
+        vec[0] = x[i];
+    } 
+}
