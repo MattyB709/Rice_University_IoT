@@ -1,124 +1,91 @@
-//use std::vec;
-//use rand::Rng;
+mod query;
+use query::Query;
 
-fn main() {
-    let stream1 = vec![1,2,3,1,4,3,4,4,3,3,3,2,4,4];
-    let stream2 = vec![9,121,3,11,5,6,6,3,3];
-    let stream3 = vec![-5,-100,-11,-2];
-       
-    // Running average test case:
+// My most recent algorithm (sliding window max)
 
-    println!("{}", running_average(&stream1));
-    println!("{}", running_average(&stream2));
-    println!("{}", running_average(&stream3));
-
-    // stdev test case
-
-    /*println!("{}", stdev(&stream1));
-    println!("{}", stdev(&stream2));
-    println!("{}", stdev(&stream3));*/
-
-    // second greatest test case
-
-    
-    /*println!("{}", second_greatest(&stream1));
-    println!("{}", second_greatest(&stream2));
-    println!("{}", second_greatest(&stream3));*/
-    
-
-    // ksteps ago test case
-
-    
-    /*ksteps(&stream1, 3);
-    ksteps(&stream2, 4);
-    ksteps(&stream3, 5);*/
-    
-
-    // most frequent test case
-    
-    /*let stream1 = vec![1,2,3,1,4,3,4,4,3,3,3,2,4,4];
-    let stream2 = vec![9,121,3,11,5,6,6,3,3];
-    let stream3 = vec![5,100,11,2];
-
-    println!("{}", most_frequent(&stream1));
-    println!("{}", most_frequent(&stream2));
-    println!("{}", most_frequent(&stream3));*/
+struct SlidingWindowMax{
+    max:i64,
+    window_length:usize,
+    index:usize,
+    tree:Vec<i64>
 }
 
-fn find_max(x: &Vec<i16>)->i16{
-    let mut greatest: i16 = x[0];
-    for i in 1..x.len(){
-        if x[i] > greatest{
-            greatest = x[i];
+// Created sliding window functions
+
+impl SlidingWindowMax{
+    fn new(k: usize)->SlidingWindowMax{
+        SlidingWindowMax{max: 0,window_length: k, index:0, tree:vec![0;k*4]}
+    }
+
+    fn find_max(&mut self, first: i64, second: i64) ->i64{
+        match first > second{
+            true=>first,
+            false=>second
         }
     }
-    greatest
-}
 
-fn running_average (x: &Vec<i16>)->f32{
-    let mut sum = 0;
-    for num in x{
-        sum += num;
-    }
-    (sum as f32)/(x.len() as f32)
-}
+    // Creating the tree functions
 
-fn stdev (x: &Vec<i16>)->f32{
-    let mut sum = 0.0;
-    let mut sumsq = 0.0;
-    let n = x.len() as f32;
-    for i in 0..x.len(){
-        let x = x[i] as f32;
-        sum += x;
-        sumsq += x*x;
-    }
-    let mean = sum/n;
-(sumsq/n-(mean.powf(2.0))).sqrt()
-}
-
-fn most_frequent(x: &Vec<u8>)->u8{
-    let mut arr: [u8; 256] = [0; 256];
-    let mut frequency: u8 = 0;
-    let mut most_frequent: u8 = 0;
-    for &num in x{
-        arr[num as usize]+=1;
-        if arr[num as usize]  > frequency{
-            frequency = arr[num as usize];
-            most_frequent = num;
+    fn build_tree(&mut self, left_border: usize, right_border: usize, vertex: usize){
+        if left_border == right_border{
+            self.tree[vertex] = std::i64::MIN;
         }
-        else if arr[num as usize] == frequency && num > most_frequent{
-            most_frequent = num as u8;
+        else{
+            let middle = (left_border + right_border) / 2;
+            self.build_tree(left_border, middle, vertex * 2);
+            self.build_tree(middle + 1, right_border, vertex*2 + 1);
+            self.tree[vertex] = std::i64::MIN;
+        }
+        
+    }
+
+    // updating the max for the tree
+    fn update_max(&mut self, vertex: usize){
+        // Base case
+        if vertex == 1{
+            self.tree[vertex] = self.find_max(self.tree[vertex*2], self.tree[vertex*2+1]);
+        }
+        else{
+            // Before it hits the root, move upward through the tree and update at each point
+            self.tree[vertex] = self.find_max(self.tree[vertex*2], self.tree[vertex*2+1]);
+            self.update_max(vertex/2);
+            
         }
     }
-    most_frequent
 }
 
-fn second_greatest(x: &Vec<i16>)->i16{
-    let mut greatest = x[0];
-    let mut second: i16 = 0;
-    for i in 1..x.len(){
-        if x[i] > greatest{
-            second = greatest;
-            greatest = x[i];
-        }
-        else if x[i] > second && x[i] < greatest{
-            second = x[i];
-        }
+// Implementing Query Trait
+
+impl Query<i64, i64> for SlidingWindowMax{
+    // On start, initialize an empty tree with values of MIN
+    fn start(&mut self) {
+        self.max = 0;
+        self.index=0;
+        self.build_tree(0, self.window_length-1, 1)
     }
-    second
+
+    fn next(&mut self, item: i64) -> i64 {
+        if self.index == self.window_length{
+            self.index = 0;
+        }
+        self.tree[self.window_length + self.index] = item;
+        self.update_max((self.window_length + self.index)/2);
+        self.index+=1;
+        self.tree[1]
+    }
 }
 
-fn ksteps(x: &Vec<i16>, k: usize){
-    // Creates a vector to be used as delay system
-    let mut vec = vec![0; k];
-    for i in 0..x.len(){
-        // Prints the furthest right number in the vector
-        println!("{}", vec[k-1]);
-        // Pushes all numbers one spot to the right
-        for y in (1..vec.len()).rev(){
-            vec[y] = vec[y-1];
-        }
-        // Sets the first element of the vector to current item
-        vec[0] = x[i];
-    } 
+fn main(){
+
+    let stream1 = vec![1,2,3,1,7,3,4,4,3,3,3,2,4,4, 11, 3, 2, 3, 5 , 4 ,3, 2];
+    let _stream2 = vec![9,3,11,5,6,121,6,3,3];
+    let _stream3 = vec![-5,-100,-11,-2, 1, 11, 5, -3, -4, -10];
+    let mut sliding_window_struct = SlidingWindowMax::new(3);
+    
+    sliding_window_struct.start();
+    for i in 0..stream1.len(){
+        println!("input: {}", stream1[i]);
+        println!("Output: {}", sliding_window_struct.next(stream1[i]));
+        println!();
+    }
 }
