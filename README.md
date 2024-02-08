@@ -14,6 +14,8 @@ All code is being done on a seperate, private repository, this is simply a mirro
 - Second greatest
 - K steps ago
 - Find sum and average on a sliding window
+- Find max on a sliding window using a segment tree
 
 **Current project**
-- Find max on a sliding window
+- Find max on a sliding window using dominated values
+- Read [Sprintz: Time Series Compression for the Internet of Things](https://dl.acm.org/doi/pdf/10.1145/3264903)
